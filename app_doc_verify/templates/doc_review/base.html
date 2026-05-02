@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Doc Verification{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'doc_review/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Document Verification</div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'all_comments' %}" class="nav-link">All Comments</a>
+            <span class="nav-user">{{ request.user.username }}</span>
+            <a href="{% url 'logout' %}" class="nav-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bulk reject modal -->
+    <div id="bulk-reject-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <h3>Reason for Bulk Rejection</h3>
+            <textarea id="bulk-reject-reason" rows="4" placeholder="Enter reason for rejecting selected applications..."></textarea>
+            <div class="modal-actions">
+                <button class="btn-reject-confirm" onclick="submitBulkReject()">Confirm Rejection</button>
+                <button class="btn-cancel" onclick="closeBulkModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function openBulkModal() {
+        document.getElementById('bulk-reject-modal').style.display = 'flex';
+    }
+    function closeBulkModal() {
+        document.getElementById('bulk-reject-modal').style.display = 'none';
+    }
+    function submitBulkReject() {
+        var reason = document.getElementById('bulk-reject-reason').value.trim();
+        if (!reason) { alert('Please enter a reason.'); return; }
+        document.getElementById('bulk-reason-input').value = reason;
+        document.getElementById('bulk-action-value').value = 'bulk_reject';
+        document.getElementById('bulk-form').submit();
+    }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

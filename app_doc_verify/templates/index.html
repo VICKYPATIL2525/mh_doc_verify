@@ -1,42 +1,36 @@
-{% load static %}  <!--  # this is used to load the static files like css, js and images, and we will use this tag to load the css file in the head section of the html file -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Document Verification</title>
-    
-    <!-- Django static tag to load CSS -->
-    
-    <!-- this is the path of the css file which we will create in the static folder, and we will create a 
-     folder named verification inside the static folder to store all the css files related to this project -->
-    <link rel="stylesheet" href="{% static 'index.css' %}"> 
+    <link rel="stylesheet" href="{% static 'index.css' %}">
 </head>
 <body>
     <div class="container">
         <div class="login-box">
             <h1>Document Verification</h1>
-            <p class="subtitle">Please login to continue</p>
-            
+            <p class="subtitle">Staff Login</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="error-msg">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+
             <form method="POST" action="" class="login-form">
                 {% csrf_token %}
-                
                 <div class="input-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" required>
                 </div>
-                
                 <div class="input-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                
                 <button type="submit" class="btn">Login</button>
             </form>
-            
-            <div class="demo">
-                <p>Demo: admin / admin123</p>
-            </div>
         </div>
     </div>
 </body>

@@ -1,0 +1,160 @@
+{% extends 'doc_review/base.html' %}
+
+{% block title %}Dashboard - Doc Verification{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Applications Dashboard</h2>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card stat-pending">
+        <span class="stat-number">{{ counts.pending }}</span>
+        <span class="stat-label">Pending</span>
+    </div>
+    <div class="stat-card stat-approved">
+        <span class="stat-number">{{ counts.approved }}</span>
+        <span class="stat-label">Approved</span>
+    </div>
+    <div class="stat-card stat-rejected">
+        <span class="stat-number">{{ counts.rejected }}</span>
+        <span class="stat-label">Rejected</span>
+    </div>
+</div>
+
+<!-- Filter & Search -->
+<div class="filter-bar">
+    <form method="GET" action="{% url 'dashboard' %}" class="filter-form">
+        <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name or email..." class="search-input">
+        <select name="status" class="status-select">
+            <option value="">All Status</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+        <button type="submit" class="btn-filter">Search</button>
+        {% if status_filter or search_query %}
+            <a href="{% url 'dashboard' %}" class="btn-clear">Clear</a>
+        {% endif %}
+    </form>
+
+    <a href="{% url 'export_csv' %}?status={{ status_filter }}&q={{ search_query }}" class="btn-export">Export CSV</a>
+</div>
+
+<!-- Bulk action form -->
+<form method="POST" action="{% url 'bulk_action' %}" id="bulk-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="bulk-action-value" value="bulk_approve">
+    <input type="hidden" name="bulk_rejection_reason" id="bulk-reason-input" value="">
+
+    <div class="bulk-toolbar" id="bulk-toolbar" style="display:none;">
+        <span id="selected-count">0 selected</span>
+        <button type="submit" class="btn-bulk-approve" onclick="document.getElementById('bulk-action-value').value='bulk_approve'">
+            Approve Selected
+        </button>
+        <button type="button" class="btn-bulk-reject" onclick="openBulkModal()">
+            Reject Selected
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table class="app-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all" title="Select all"></th>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Specialization</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in page_obj %}
+                <tr>
+                    <td>
+                        {% if app.status == 'pending' %}
+                        <input type="checkbox" name="selected_ids" value="{{ app.pk }}" class="row-check">
+                        {% endif %}
+                    </td>
+                    <td>{{ app.id }}</td>
+                    <td>
+                        <div class="name-cell">
+                            {{ app.full_name }}
+                            {% if app.pk in commented_ids %}
+                                <span class="comment-dot" title="Has comments"></span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ app.email }}</td>
+                    <td>{{ app.specialization }}</td>
+                    <td>{{ app.submitted_at|date:"d M Y" }}</td>
+                    <td>
+                        <span class="badge badge-{{ app.status }}">{{ app.get_status_display }}</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'application_detail' app.pk %}" class="btn-view">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-row">No applications found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&q={{ search_query }}" class="page-btn">&laquo; Prev</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span class="page-btn page-current">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}&status={{ status_filter }}&q={{ search_query }}" class="page-btn">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&q={{ search_query }}" class="page-btn">Next &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Select all checkbox
+document.getElementById('select-all').addEventListener('change', function() {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = this.checked);
+    updateBulkToolbar();
+});
+
+// Individual checkbox change
+document.querySelectorAll('.row-check').forEach(cb => {
+    cb.addEventListener('change', updateBulkToolbar);
+});
+
+function updateBulkToolbar() {
+    var checked = document.querySelectorAll('.row-check:checked');
+    var toolbar = document.getElementById('bulk-toolbar');
+    var countLabel = document.getElementById('selected-count');
+    if (checked.length > 0) {
+        toolbar.style.display = 'flex';
+        countLabel.textContent = checked.length + ' selected';
+    } else {
+        toolbar.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

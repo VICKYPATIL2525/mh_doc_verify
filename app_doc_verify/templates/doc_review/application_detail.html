@@ -1,0 +1,112 @@
+{% extends 'doc_review/base.html' %}
+
+{% block title %}{{ application.full_name }} - Review{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{% url 'dashboard' %}" class="back-link">&larr; Back to Dashboard</a>
+    <h2>Application Review</h2>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-card">
+        <h3>Doctor Information</h3>
+        <table class="info-table">
+            <tr><td>Name</td><td>{{ application.full_name }}</td></tr>
+            <tr><td>Email</td><td>{{ application.email }}</td></tr>
+            <tr><td>Phone</td><td>{{ application.phone }}</td></tr>
+            <tr><td>Specialization</td><td>{{ application.specialization }}</td></tr>
+            <tr><td>Submitted</td><td>{{ application.submitted_at|date:"d M Y, H:i" }}</td></tr>
+            <tr>
+                <td>Status</td>
+                <td><span class="badge badge-{{ application.status }}">{{ application.get_status_display }}</span></td>
+            </tr>
+            {% if application.reviewed_by %}
+            <tr><td>Reviewed By</td><td>{{ application.reviewed_by.username }}</td></tr>
+            <tr><td>Reviewed At</td><td>{{ application.reviewed_at|date:"d M Y, H:i" }}</td></tr>
+            {% endif %}
+            {% if application.rejection_reason %}
+            <tr><td>Rejection Reason</td><td class="rejection-text">{{ application.rejection_reason }}</td></tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <div class="detail-card">
+        <h3>Submitted Documents</h3>
+        {% if doc_files %}
+        <ul class="doc-list">
+            {% for doc in doc_files %}
+            <li class="doc-item">
+                <span class="doc-icon">&#128196;</span>
+                <a href="{{ doc.url }}" target="_blank" class="doc-link">{{ doc.name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="no-docs">No documents found in storage folder.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if application.status == 'pending' %}
+<div class="review-actions">
+    <h3>Review Decision</h3>
+    <form method="POST" action="{% url 'review_application' application.pk %}">
+        {% csrf_token %}
+        <div class="action-buttons">
+            <button type="submit" name="action" value="approve" class="btn-approve"
+                onclick="return confirm('Approve this application?')">
+                Approve
+            </button>
+            <button type="button" class="btn-reject" onclick="toggleRejectForm()">
+                Reject
+            </button>
+        </div>
+        <div id="reject-section" style="display:none;" class="reject-section">
+            <label for="rejection_reason">Reason for Rejection</label>
+            <textarea id="rejection_reason" name="rejection_reason" rows="4"
+                placeholder="Provide a clear reason..."></textarea>
+            <button type="submit" name="action" value="reject" class="btn-reject-confirm">
+                Confirm Rejection
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Comments -->
+<div class="comments-section">
+    <h3>Internal Notes &amp; Comments</h3>
+
+    {% if comments %}
+        <div class="comment-thread">
+            {% for comment in comments %}
+            <div class="comment-item">
+                <div class="comment-header">
+                    <span class="comment-author">{{ comment.author.username }}</span>
+                    <span class="comment-time">{{ comment.created_at|date:"d M Y, H:i" }}</span>
+                </div>
+                <div class="comment-body">{{ comment.text }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="no-comments">No comments yet.</p>
+    {% endif %}
+
+    <form method="POST" action="" class="comment-form">
+        {% csrf_token %}
+        <textarea name="comment_text" rows="3" placeholder="Add an internal note..."></textarea>
+        <button type="submit" class="btn-comment">Add Comment</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRejectForm() {
+    var section = document.getElementById('reject-section');
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -1,17 +1,19 @@
- # this is used to return a response to the user, we will use this in future when we 
- # will create html files for login, home and logout pages
-
-from django.http import HttpResponse
- # this is used to render the html files, we will use this in 
- # future when we will create html files for login, home and logout pages
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 
 def home(request):
-    #return HttpResponse("Login Page")  
-    return render(request, 'index.html') # this will render the index.html file which is in templates folder, and it will show the content of index.html file when we open the website  
+    if request.user.is_authenticated:
+        return redirect('dashboard')
 
-def info(request):
-    return render(request, 'info.html') # this will render the info.html file which is in templates folder, and it will show the content of info.html file when we open the website")
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid username or password.')
 
-def logout(request):
-    return HttpResponse("Logout Page")
+    return render(request, 'index.html')

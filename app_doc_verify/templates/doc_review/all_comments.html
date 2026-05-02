@@ -1,0 +1,46 @@
+{% extends 'doc_review/base.html' %}
+
+{% block title %}All Comments - Doc Verification{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>All Internal Comments</h2>
+</div>
+
+<div class="table-container">
+    <table class="app-table">
+        <thead>
+            <tr>
+                <th>Doctor</th>
+                <th>Status</th>
+                <th>Comment</th>
+                <th>By</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for comment in comments %}
+            <tr>
+                <td>{{ comment.application.full_name }}</td>
+                <td>
+                    <span class="badge badge-{{ comment.application.status }}">
+                        {{ comment.application.get_status_display }}
+                    </span>
+                </td>
+                <td class="comment-preview">{{ comment.text|truncatechars:100 }}</td>
+                <td>{{ comment.author.username }}</td>
+                <td>{{ comment.created_at|date:"d M Y, H:i" }}</td>
+                <td>
+                    <a href="{% url 'application_detail' comment.application.pk %}" class="btn-view">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-row">No comments have been made yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
